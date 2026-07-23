@@ -34,11 +34,17 @@ jobs:
           GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
         run: |
           cat <<EOF > karoosync.cfg
+          [karoo]
+          username = $HAMMERHEAD_EMAIL
+          password = $HAMMERHEAD_PASSWORD
+
           [hammerhead]
+          username = $HAMMERHEAD_EMAIL
           email = $HAMMERHEAD_EMAIL
           password = $HAMMERHEAD_PASSWORD
 
           [garmin]
+          username = $GARMIN_EMAIL
           email = $GARMIN_EMAIL
           password = $GARMIN_PASSWORD
           EOF
