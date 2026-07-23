@@ -32,4 +32,4 @@ jobs:
           GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
           GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
         run: |
-          python sync.py
+          python karoo_garmin_sync.py
