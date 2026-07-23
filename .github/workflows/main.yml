@@ -26,26 +26,40 @@ jobs:
           pip install garminconnect requests garth PyJWT
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Create karoosync.cfg
+      - name: Generate and Fill karoosync.cfg
         env:
           HAMMERHEAD_EMAIL: ${{ secrets.HAMMERHEAD_EMAIL }}
           HAMMERHEAD_PASSWORD: ${{ secrets.HAMMERHEAD_PASSWORD }}
           GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
           GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
         run: |
-          python -c "import configparser, os
+          # 1. Erster Lauf: Skript generiert die originale karoosync.cfg-Vorlage
+          python karoo_garmin_sync.py || true
+
+          # 2. Zugangsdaten in die frisch erzeugte Datei einfügen
+          sed -i "s/your_hammerhead_email/$HAMMERHEAD_EMAIL/g" karoosync.cfg || true
+          sed -i "s/your_hammerhead_password/$HAMMERHEAD_PASSWORD/g" karoosync.cfg || true
+          sed -i "s/your_garmin_email/$GARMIN_EMAIL/g" karoosync.cfg || true
+          sed -i "s/your_garmin_password/$GARMIN_PASSWORD/g" karoosync.cfg || true
+
+          # Dynamisches Überschreiben aller Werte mit den Secrets:
+          python -c "
+          import configparser, os
           config = configparser.ConfigParser()
-          
-          config['karoo'] = {'username': os.environ['HAMMERHEAD_EMAIL'], 'password': os.environ['HAMMERHEAD_PASSWORD'], 'email': os.environ['HAMMERHEAD_EMAIL']}
-          config['Karoo'] = {'username': os.environ['HAMMERHEAD_EMAIL'], 'password': os.environ['HAMMERHEAD_PASSWORD'], 'email': os.environ['HAMMERHEAD_EMAIL']}
-          config['hammerhead'] = {'username': os.environ['HAMMERHEAD_EMAIL'], 'password': os.environ['HAMMERHEAD_PASSWORD'], 'email': os.environ['HAMMERHEAD_EMAIL']}
-          config['garmin'] = {'username': os.environ['GARMIN_EMAIL'], 'password': os.environ['GARMIN_PASSWORD'], 'email': os.environ['GARMIN_EMAIL']}
-          config['Garmin'] = {'username': os.environ['GARMIN_EMAIL'], 'password': os.environ['GARMIN_PASSWORD'], 'email': os.environ['GARMIN_EMAIL']}
-          
+          config.read('karoosync.cfg')
+          for section in config.sections():
+              for key in config[section]:
+                  if 'garmin' in section.lower():
+                      if 'pass' in key.lower(): config[section][key] = os.environ['GARMIN_PASSWORD']
+                      else: config[section][key] = os.environ['GARMIN_EMAIL']
+                  else:
+                      if 'pass' in key.lower(): config[section][key] = os.environ['HAMMERHEAD_PASSWORD']
+                      else: config[section][key] = os.environ['HAMMERHEAD_EMAIL']
           with open('karoosync.cfg', 'w') as f:
               config.write(f)
           "
 
       - name: Run Sync Script
         run: |
+          # 3. Zweiter Lauf: Jetzt sind die Daten sicher eingetragen
           python karoo_garmin_sync.py
