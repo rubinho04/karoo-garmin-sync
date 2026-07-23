@@ -33,21 +33,18 @@ jobs:
           GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
           GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
         run: |
-          cat <<EOF > karoosync.cfg
-          [karoo]
-          username = $HAMMERHEAD_EMAIL
-          password = $HAMMERHEAD_PASSWORD
-
-          [hammerhead]
-          username = $HAMMERHEAD_EMAIL
-          email = $HAMMERHEAD_EMAIL
-          password = $HAMMERHEAD_PASSWORD
-
-          [garmin]
-          username = $GARMIN_EMAIL
-          email = $GARMIN_EMAIL
-          password = $GARMIN_PASSWORD
-          EOF
+          python -c "import configparser, os
+          config = configparser.ConfigParser()
+          
+          config['karoo'] = {'username': os.environ['HAMMERHEAD_EMAIL'], 'password': os.environ['HAMMERHEAD_PASSWORD'], 'email': os.environ['HAMMERHEAD_EMAIL']}
+          config['Karoo'] = {'username': os.environ['HAMMERHEAD_EMAIL'], 'password': os.environ['HAMMERHEAD_PASSWORD'], 'email': os.environ['HAMMERHEAD_EMAIL']}
+          config['hammerhead'] = {'username': os.environ['HAMMERHEAD_EMAIL'], 'password': os.environ['HAMMERHEAD_PASSWORD'], 'email': os.environ['HAMMERHEAD_EMAIL']}
+          config['garmin'] = {'username': os.environ['GARMIN_EMAIL'], 'password': os.environ['GARMIN_PASSWORD'], 'email': os.environ['GARMIN_EMAIL']}
+          config['Garmin'] = {'username': os.environ['GARMIN_EMAIL'], 'password': os.environ['GARMIN_PASSWORD'], 'email': os.environ['GARMIN_EMAIL']}
+          
+          with open('karoosync.cfg', 'w') as f:
+              config.write(f)
+          "
 
       - name: Run Sync Script
         run: |
