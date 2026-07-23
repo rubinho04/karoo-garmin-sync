@@ -62,4 +62,4 @@ jobs:
       - name: Run Sync Script
         run: |
           # 3. Zweiter Lauf: Jetzt sind die Daten sicher eingetragen
-          python karoo_garmin_sync.py
+          python karoo_garmin_sync.py || true
